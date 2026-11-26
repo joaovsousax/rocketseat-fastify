@@ -1,8 +1,10 @@
 import "./env";
 
+import swagger from "@fastify/swagger";
 import fastify from "fastify";
 import {
   hasZodFastifySchemaValidationErrors,
+  jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
 } from "fastify-type-provider-zod";
@@ -46,10 +48,38 @@ app.addHook("onRequest", async (request) => {
   };
 });
 
-app.register(transcriptionRoutes);
-
 async function start() {
   try {
+    await app.register(swagger, {
+      openapi: {
+        openapi: "3.1.0",
+        info: {
+          title: "Videos API",
+          description: "API for managing YouTube video transcriptions.",
+          version: "1.0.0",
+        },
+        servers: [
+          { url: "http://localhost:3333", description: "Local development" },
+        ],
+        tags: [
+          {
+            name: "Transcriptions",
+            description: "Create and list video transcriptions.",
+          },
+        ],
+      },
+      transform: jsonSchemaTransform,
+    });
+
+    await app.register(import("@scalar/fastify-api-reference"), {
+      routePrefix: "/api/docs",
+      configuration: {
+        title: "Videos API Reference",
+      },
+    });
+
+    await app.register(transcriptionRoutes);
+
     await app.listen({ port: 3333, host: "0.0.0.0" });
   } catch (error) {
     app.log.error(error);
