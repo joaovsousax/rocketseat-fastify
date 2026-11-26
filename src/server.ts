@@ -1,7 +1,4 @@
-import dotenv from "dotenv";
-
-dotenv.config({ path: ".env.local" });
-dotenv.config();
+import "./env";
 
 import fastify from "fastify";
 import {
@@ -34,8 +31,6 @@ app.setErrorHandler<Error & { statusCode?: number }>(
     }
 
     app.log.error(error);
-
-    console.log(error);
 
     return reply.status(500).send({ message: error.message });
   },

@@ -15,33 +15,11 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-let tableReady: Promise<void> | null = null;
-
-async function ensureTable() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS transcriptions (
-      id TEXT PRIMARY KEY,
-      created_by TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL,
-      updated_at TIMESTAMPTZ NOT NULL,
-      content TEXT NOT NULL,
-      youtube_url TEXT NOT NULL,
-      youtube_id TEXT NOT NULL
-    )
-  `);
-}
-
-function ensureReady() {
-  tableReady ??= ensureTable();
-  return tableReady;
-}
-
 export async function createTranscription(
   youtubeUrl: string,
   youtubeId: string,
   userId: string,
 ): Promise<Transcription> {
-  await ensureReady();
   const now = new Date();
 
   const transcription: Transcription = {
@@ -79,7 +57,6 @@ export async function createTranscription(
 }
 
 export async function getTranscriptions(): Promise<Transcription[]> {
-  await ensureReady();
   const result = await pool.query<Transcription>(
     "SELECT * FROM transcriptions ORDER BY created_at DESC",
   );

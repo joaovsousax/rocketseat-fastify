@@ -4,9 +4,10 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "env:setup": "copy .env.example .env",
-    "infra:up": "docker compose up -d",
+    "infra:up": "docker compose up -d --wait",
     "infra:down": "docker compose down",
-    "local:setup": "npm run env:setup && npm run infra:up",
+    "local:setup": "npm run env:setup && npm run infra:up && npm run migrations:run",
+    "migrations:run": "tsx src/db/migrate.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit"
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
+    "postgrator": "^8.0.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
