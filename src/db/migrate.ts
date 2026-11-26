@@ -1,8 +1,9 @@
 import "../env";
 
 import path from "node:path";
-import { Client } from "pg";
-import Postgrator from "postgrator";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import postgres from "postgres";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -10,41 +11,22 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not defined.");
 }
 
-const client = new Client({ connectionString });
+const client = postgres(connectionString, { max: 1 });
+const db = drizzle(client);
 
-async function migrate() {
-  await client.connect();
-
-  const postgrator = new Postgrator({
-    migrationPattern: path
-      .join(process.cwd(), "migrations", "*")
-      .split(path.sep)
-      .join(path.posix.sep),
-    driver: "pg",
-    execQuery: (query) => client.query(query),
-    execSqlScript: async (sql) => {
-      await client.query(sql);
-    },
-  });
-
-  postgrator.on("migration-started", (migration) => {
-    console.log(`Running migration: ${migration.filename}`);
-  });
-
+async function applyMigrations() {
   try {
-    const appliedMigrations = await postgrator.migrate(process.argv[2] ?? "max");
+    await migrate(db, {
+      migrationsFolder: path.join(process.cwd(), "migrations"),
+    });
 
-    console.log(
-      appliedMigrations.length > 0
-        ? `Applied ${appliedMigrations.length} migration(s).`
-        : "Database is up to date.",
-    );
+    console.log("Database is up to date.");
   } finally {
     await client.end();
   }
 }
 
-migrate().catch((error) => {
+applyMigrations().catch((error) => {
   console.error(error);
   process.exit(1);
 });
