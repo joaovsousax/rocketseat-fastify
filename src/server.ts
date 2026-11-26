@@ -1,6 +1,7 @@
 import "./env";
 
 import swagger from "@fastify/swagger";
+import { DrizzleError, DrizzleQueryError } from "drizzle-orm";
 import fastify from "fastify";
 import {
   hasZodFastifySchemaValidationErrors,
@@ -10,6 +11,31 @@ import {
 } from "fastify-type-provider-zod";
 import { transcriptionRoutes } from "./routes/transcriptions";
 import { UserPayload } from "./types/fastify";
+
+type DatabaseErrorCause = Error & {
+  code?: string;
+  detail?: string;
+  constraint_name?: string;
+  table_name?: string;
+  column_name?: string;
+};
+
+function mapDatabaseErrorCause(error: Error) {
+  const cause = error.cause as DatabaseErrorCause | undefined;
+
+  if (!cause) {
+    return undefined;
+  }
+
+  return {
+    message: cause.message,
+    code: cause.code,
+    detail: cause.detail,
+    constraint: cause.constraint_name,
+    table: cause.table_name,
+    column: cause.column_name,
+  };
+}
 
 const app = fastify();
 
@@ -25,6 +51,26 @@ app.setErrorHandler<Error & { statusCode?: number }>(
           field: issue.instancePath.replace(/^\//, "") || "body",
           message: issue.message,
         })),
+      });
+    }
+
+    if (error instanceof DrizzleQueryError) {
+      app.log.error(error);
+
+      return reply.status(500).send({
+        message: "Database query error.",
+        query: error.query,
+        params: error.params,
+        cause: mapDatabaseErrorCause(error),
+      });
+    }
+
+    if (error instanceof DrizzleError) {
+      app.log.error(error);
+
+      return reply.status(500).send({
+        message: "Database error.",
+        cause: mapDatabaseErrorCause(error),
       });
     }
 

@@ -8,6 +8,13 @@
       "when": 1795710217288,
       "tag": "0000_aspiring_warstar",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795711832802,
+      "tag": "0001_slim_mentor",
+      "breakpoints": true
     }
   ]
 }

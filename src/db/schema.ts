@@ -6,6 +6,8 @@ export const transcriptions = pgTable("transcriptions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   content: text("content").notNull(),
+  videoUrl: text("video_url").notNull(),
+  videoId: text("video_id").notNull(),
   youtubeUrl: text("youtube_url").notNull(),
   youtubeId: text("youtube_id").notNull(),
 });

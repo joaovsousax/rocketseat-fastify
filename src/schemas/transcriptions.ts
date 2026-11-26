@@ -35,8 +35,25 @@ export const transcriptionSchema = z.object({
   }),
 });
 
+export const videoTranscriptionSchema = transcriptionSchema
+  .omit({ youtubeUrl: true, youtubeId: true })
+  .extend({
+    videoUrl: z.url().meta({
+      description: "Original video URL.",
+    }),
+    videoId: z.string().meta({
+      description: "Video identifier extracted from the URL.",
+    }),
+  });
+
 export const listTranscriptionsResponseSchema = z
   .array(transcriptionSchema)
+  .meta({
+    description: "Transcriptions ordered by creation date, newest first.",
+  });
+
+export const listVideoTranscriptionsResponseSchema = z
+  .array(videoTranscriptionSchema)
   .meta({
     description: "Transcriptions ordered by creation date, newest first.",
   });
